@@ -26,16 +26,21 @@ const adminRoutes = require('./src/routes/adminRoutes');
 const app = express();
 const server = http.createServer(app);
 
-// ✅ UPDATED CORS options - Added your new frontend URL
+// ✅ FIXED CORS - Allow all Vercel preview URLs
 const corsOptions = {
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:3000',
-        'http://127.0.0.1:5173',
-        'https://skillforge-ai-platform-sigma.vercel.app', // 👈 ADDED THIS
-        'https://skillforge-ai-frontend.vercel.app',
-        'https://skillforge-ai-backend-cji0.onrender.com'
-    ],
+    origin: function (origin, callback) {
+        // Allow all Vercel URLs, localhost, and Render
+        if (!origin || 
+            origin.includes('vercel.app') || 
+            origin.includes('localhost') ||
+            origin.includes('127.0.0.1') ||
+            origin.includes('onrender.com')) {
+            callback(null, true);
+        } else {
+            console.log('Blocked by CORS:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With']
@@ -237,7 +242,7 @@ const startServer = async () => {
         console.log(`🔗 API URL: http://localhost:${PORT}/api`);
         console.log(`💚 Health check: http://localhost:${PORT}/api/health`);
         console.log(`🔌 Socket.io server ready on port ${PORT}`);
-        console.log(`🌐 CORS enabled for your frontend URLs`);
+        console.log(`🌐 CORS enabled for all Vercel URLs and localhost`);
     });
 };
 
