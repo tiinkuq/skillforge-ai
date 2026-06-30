@@ -26,9 +26,16 @@ const adminRoutes = require('./src/routes/adminRoutes');
 const app = express();
 const server = http.createServer(app);
 
-// CORS options
+// ✅ UPDATED CORS options - Added your new frontend URL
 const corsOptions = {
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'],
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://127.0.0.1:5173',
+        'https://skillforge-ai-platform-sigma.vercel.app', // 👈 ADDED THIS
+        'https://skillforge-ai-frontend.vercel.app',
+        'https://skillforge-ai-backend-cji0.onrender.com'
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With']
@@ -71,6 +78,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api', reviewRoutes);
 app.use('/api/admin', adminRoutes);
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.status(200).json({ 
@@ -98,25 +106,21 @@ app.use((req, res) => {
     });
 });
 
-// Socket.io connection handling - FIXED ONLINE STATUS
+// Socket.io connection handling
 io.on('connection', (socket) => {
     console.log('🟢 New client connected:', socket.id);
 
-    // Get user ID from handshake auth
     const userId = socket.handshake.auth.userId;
     const userName = socket.handshake.auth.userName;
     
     if (userId) {
-        // Store user connection
         socket.userId = userId;
         socket.userName = userName || 'User';
         connectedUsers.set(userId, { socketId: socket.id, userName: socket.userName });
         
-        // Join user's personal room
         socket.join(`user-${userId}`);
         console.log(`👤 User ${socket.userName} (${userId}) joined room user-${userId}`);
         
-        // BROADCAST ONLINE STATUS TO ALL OTHER USERS
         io.emit('user-online', { 
             userId, 
             userName: socket.userName,
@@ -124,7 +128,6 @@ io.on('connection', (socket) => {
         });
         console.log(`📢 Broadcast: ${socket.userName} is ONLINE`);
         
-        // Send current online users to the newly connected user
         const onlineUsersList = Array.from(connectedUsers.entries()).map(([id, data]) => ({
             userId: id,
             userName: data.userName
@@ -133,7 +136,6 @@ io.on('connection', (socket) => {
         console.log(`📋 Sent online users list to ${socket.userName}:`, onlineUsersList.length);
     }
 
-    // Join chat room
     socket.on('join-chat', ({ chatId }) => {
         if (chatId) {
             socket.join(`chat-${chatId}`);
@@ -142,7 +144,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Leave chat room
     socket.on('leave-chat', ({ chatId }) => {
         if (chatId) {
             socket.leave(`chat-${chatId}`);
@@ -150,7 +151,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Send message
     socket.on('send-message', (data) => {
         try {
             const { chatId, message, senderId, recipientId } = data;
@@ -166,10 +166,8 @@ io.on('connection', (socket) => {
                 read: false
             };
 
-            // Emit to all users in the chat room
             io.to(`chat-${chatId}`).emit('new-message', messageData);
 
-            // Send notification to recipient
             if (recipientId) {
                 io.to(`user-${recipientId}`).emit('message-notification', {
                     chatId,
@@ -186,7 +184,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Typing indicator
     socket.on('typing', ({ chatId, userId, isTyping }) => {
         socket.to(`chat-${chatId}`).emit('user-typing', {
             userId,
@@ -195,19 +192,14 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Mark messages as read
     socket.on('mark-read', ({ chatId, userId }) => {
         io.to(`chat-${chatId}`).emit('messages-read', { userId, chatId });
     });
 
-    // Disconnect - BROADCAST OFFLINE STATUS
     socket.on('disconnect', () => {
         console.log('🔴 Client disconnected:', socket.id);
         if (socket.userId) {
-            // Remove from connected users
             connectedUsers.delete(socket.userId);
-            
-            // BROADCAST OFFLINE STATUS TO ALL OTHER USERS
             io.emit('user-offline', { 
                 userId: socket.userId,
                 userName: socket.userName || 'User',
@@ -245,7 +237,7 @@ const startServer = async () => {
         console.log(`🔗 API URL: http://localhost:${PORT}/api`);
         console.log(`💚 Health check: http://localhost:${PORT}/api/health`);
         console.log(`🔌 Socket.io server ready on port ${PORT}`);
-        console.log(`🌐 CORS enabled for: http://localhost:5173`);
+        console.log(`🌐 CORS enabled for your frontend URLs`);
     });
 };
 
