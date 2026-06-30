@@ -1,0 +1,1 @@
+hii see remove .env file before githu and after paste it to original place
