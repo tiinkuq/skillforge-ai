@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { courseService } from '../services/courseService';
@@ -10,6 +11,8 @@ import Reviews from '../components/reviews/Reviews';
 
 const CourseDetail = () => {
     const { id } = useParams();
+    const location = useLocation();
+    console.log('🆔 Course ID from URL:', id);
     const navigate = useNavigate();
     const { user, isAuthenticated, refreshUser } = useAuth();
     const showToast = useToast();
@@ -28,6 +31,11 @@ const CourseDetail = () => {
          user.email === course.instructor.email);
 
     useEffect(() => {
+        console.log('🔍 CourseDetail mounted with ID:', id);
+        console.log('🔍 Current URL:', window.location.href);
+        console.log('🔍 useParams:', params);
+        console.log('🔍 location:', location.pathname);
+        console.log('🔍 id from params:', params.id);
         fetchCourse();
     }, [id]);
 
