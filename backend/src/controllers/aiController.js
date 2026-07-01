@@ -1,13 +1,61 @@
 const {
     generateCourseOutline,
     chatWithTutor,
-    generateQuiz: generateQuizFromAI,  // Renamed import
+    generateQuiz,
     summarizeContent,
     explainConcept
 } = require('../services/aiService');
 const Course = require('../models/Course');
 
-// @desc    Generate course outline using AI
+// @desc    Chat with AI tutor
+// @route   POST /api/ai/chat
+// @access  Private
+const chat = async (req, res) => {
+    try {
+        console.log('📩 /api/ai/chat called');
+        console.log('📩 Request body:', req.body);
+        
+        const { question, courseId, conversationHistory } = req.body;
+
+        if (!question) {
+            console.log('❌ No question provided');
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide a question'
+            });
+        }
+
+        // Get course context if courseId provided
+        let courseContext = '';
+        if (courseId) {
+            console.log('📚 Fetching course:', courseId);
+            const course = await Course.findById(courseId).select('title description');
+            if (course) {
+                courseContext = `${course.title}: ${course.description}`;
+                console.log('📚 Course context found');
+            } else {
+                console.log('⚠️ Course not found');
+            }
+        }
+
+        console.log('📤 Calling chatWithTutor...');
+        const reply = await chatWithTutor(question, courseContext, conversationHistory || []);
+        console.log('📥 Reply received, length:', reply ? reply.length : 0);
+
+        res.status(200).json({
+            success: true,
+            reply
+        });
+    } catch (error) {
+        console.error('❌ Chat Error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to get AI response'
+        });
+    }
+};
+
+// @desc    Generate course outline
 // @route   POST /api/ai/generate-course
 // @access  Private (Instructor)
 const generateCourse = async (req, res) => {
@@ -23,7 +71,6 @@ const generateCourse = async (req, res) => {
 
         const courseOutline = await generateCourseOutline(topic, level || 'beginner');
 
-        // Save as draft course
         const course = await Course.create({
             title: courseOutline.title,
             subtitle: courseOutline.subtitle || '',
@@ -52,44 +99,6 @@ const generateCourse = async (req, res) => {
     }
 };
 
-// @desc    Chat with AI tutor
-// @route   POST /api/ai/chat
-// @access  Private
-const chat = async (req, res) => {
-    try {
-        const { question, courseId, conversationHistory } = req.body;
-
-        if (!question) {
-            return res.status(400).json({
-                success: false,
-                message: 'Please provide a question'
-            });
-        }
-
-        // Get course context if courseId provided
-        let courseContext = '';
-        if (courseId) {
-            const course = await Course.findById(courseId).select('title description');
-            if (course) {
-                courseContext = `${course.title}: ${course.description}`;
-            }
-        }
-
-        const reply = await chatWithTutor(question, courseContext, conversationHistory || []);
-
-        res.status(200).json({
-            success: true,
-            reply
-        });
-    } catch (error) {
-        console.error('Chat Error:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message || 'Failed to get AI response'
-        });
-    }
-};
-
 // @desc    Generate quiz
 // @route   POST /api/ai/generate-quiz
 // @access  Private
@@ -104,8 +113,7 @@ const generateQuiz = async (req, res) => {
             });
         }
 
-        // Use the renamed imported function
-        const quiz = await generateQuizFromAI(content, numQuestions || 5, difficulty || 'medium');
+        const quiz = await generateQuiz(content, numQuestions || 5, difficulty || 'medium');
 
         res.status(200).json({
             success: true,
