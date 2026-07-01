@@ -1,7 +1,7 @@
 const {
     generateCourseOutline,
     chatWithTutor,
-    generateQuiz: generateQuizFromAI,  // Renamed import
+    generateQuiz: generateQuizFromAI,  // Renamed import to avoid conflict
     summarizeContent,
     explainConcept
 } = require('../services/aiService');
@@ -44,7 +44,7 @@ const generateCourse = async (req, res) => {
             message: 'Course outline generated successfully'
         });
     } catch (error) {
-        console.error('Generate Course Error:', error);
+        console.error('❌ Generate Course Error:', error);
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to generate course'
@@ -57,6 +57,8 @@ const generateCourse = async (req, res) => {
 // @access  Private
 const chat = async (req, res) => {
     try {
+        console.log('📩 /api/ai/chat called');
+        
         const { question, courseId, conversationHistory } = req.body;
 
         if (!question) {
@@ -75,14 +77,16 @@ const chat = async (req, res) => {
             }
         }
 
+        console.log('📤 Calling AI service...');
         const reply = await chatWithTutor(question, courseContext, conversationHistory || []);
+        console.log('📥 Reply received');
 
         res.status(200).json({
             success: true,
             reply
         });
     } catch (error) {
-        console.error('Chat Error:', error);
+        console.error('❌ Chat Error:', error);
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to get AI response'
@@ -90,7 +94,7 @@ const chat = async (req, res) => {
     }
 };
 
-// @desc    Generate quiz
+// @desc    Generate quiz (Controller function)
 // @route   POST /api/ai/generate-quiz
 // @access  Private
 const generateQuiz = async (req, res) => {
@@ -112,7 +116,7 @@ const generateQuiz = async (req, res) => {
             quiz
         });
     } catch (error) {
-        console.error('Generate Quiz Error:', error);
+        console.error('❌ Generate Quiz Error:', error);
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to generate quiz'
@@ -141,7 +145,7 @@ const summarize = async (req, res) => {
             summary
         });
     } catch (error) {
-        console.error('Summarize Error:', error);
+        console.error('❌ Summarize Error:', error);
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to summarize content'
@@ -170,7 +174,7 @@ const explain = async (req, res) => {
             explanation
         });
     } catch (error) {
-        console.error('Explain Error:', error);
+        console.error('❌ Explain Error:', error);
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to explain concept'
