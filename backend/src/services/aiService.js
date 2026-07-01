@@ -1,12 +1,23 @@
 const { GoogleGenAI } = require('@google/genai');
 
+console.log('🔍 aiService.js loaded');
+
 // Initialize Gemini with your API key
+const apiKey = process.env.GEMINI_API_KEY;
+console.log('🔑 API Key present:', !!apiKey);
+console.log('🔑 API Key starts with:', apiKey ? apiKey.substring(0, 10) + '...' : 'MISSING');
+
 const ai = new GoogleGenAI({ 
-    apiKey: process.env.GEMINI_API_KEY 
+    apiKey: apiKey
 });
+console.log('✅ GoogleGenAI initialized');
 
 // AI Tutor Chat
 const chatWithTutor = async (question, courseContext = '', conversationHistory = []) => {
+    console.log('📩 chatWithTutor called');
+    console.log('📝 Question:', question);
+    console.log('📚 Course Context:', courseContext ? courseContext.substring(0, 50) + '...' : 'none');
+    
     try {
         // Build conversation history
         let historyContext = '';
@@ -39,17 +50,24 @@ const chatWithTutor = async (question, courseContext = '', conversationHistory =
         });
 
         console.log('📥 Gemini response received');
+        console.log('📥 Response type:', typeof response);
+        console.log('📥 Response has text:', !!response.text);
 
         // v1.0.0 uses response.text directly (like in test-gemini.js)
-        return response.text;
+        const result = response.text;
+        console.log('📥 Response text length:', result ? result.length : 0);
+        
+        return result;
     } catch (error) {
         console.error('❌ AI Tutor Error:', error.message);
+        console.error('❌ Full error:', error);
         throw new Error('Failed to get AI response: ' + error.message);
     }
 };
 
 // Generate Course Outline
 const generateCourseOutline = async (topic, level = 'beginner') => {
+    console.log('📩 generateCourseOutline called');
     try {
         const prompt = `Create a detailed course outline for a ${level} level course on "${topic}".
         
@@ -99,6 +117,7 @@ const generateCourseOutline = async (topic, level = 'beginner') => {
 
 // Generate Quiz
 const generateQuiz = async (courseContent, numQuestions = 5, difficulty = 'medium') => {
+    console.log('📩 generateQuiz called');
     try {
         const prompt = `Based on the following course content, generate ${numQuestions} multiple-choice questions.
         
@@ -139,6 +158,7 @@ const generateQuiz = async (courseContent, numQuestions = 5, difficulty = 'mediu
 
 // Summarize Content
 const summarizeContent = async (content, maxLength = 200) => {
+    console.log('📩 summarizeContent called');
     try {
         const prompt = `Summarize the following content in ${maxLength} words or less.
         Make it clear, concise, and capture the key points.
@@ -160,6 +180,7 @@ const summarizeContent = async (content, maxLength = 200) => {
 
 // Explain Concept
 const explainConcept = async (concept, level = 'beginner') => {
+    console.log('📩 explainConcept called');
     try {
         const prompt = `Explain the concept of "${concept}" in simple terms for a ${level} level learner.
         
