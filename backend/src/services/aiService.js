@@ -1,5 +1,6 @@
+console.log('🔍 Loading aiService.js with @google/genai');
 const { GoogleGenAI } = require('@google/genai');
-
+console.log('✅ GoogleGenAI loaded successfully');
 // Initialize Gemini with your API key
 const ai = new GoogleGenAI({ 
     apiKey: process.env.GEMINI_API_KEY 
