@@ -1,23 +1,13 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// Model configurations
-const models = {
-    courseGenerator: 'gemini-1.5-pro',
-    tutor: 'gemini-1.5-pro',
-    quizGenerator: 'gemini-1.5-pro',
-    summarizer: 'gemini-1.5-flash'
-};
+// Initialize Gemini with new SDK
+const ai = new GoogleGenAI({ 
+    apiKey: process.env.GEMINI_API_KEY 
+});
 
 // Generate Course Outline from topic
 const generateCourseOutline = async (topic, level = 'beginner') => {
     try {
-        const model = genAI.getGenerativeModel({ 
-            model: models.courseGenerator 
-        });
-
         const prompt = `Create a detailed course outline for a ${level} level course on "${topic}".
         
         Return ONLY valid JSON with this exact structure (no markdown, no extra text):
@@ -53,9 +43,12 @@ const generateCourseOutline = async (topic, level = 'beginner') => {
         Make it comprehensive and educational.
         Lessons should be 10-20 minutes each.`;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        
+        const text = response.text;
         
         // Extract JSON from response
         const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -73,10 +66,6 @@ const generateCourseOutline = async (topic, level = 'beginner') => {
 // AI Tutor Chat
 const chatWithTutor = async (question, courseContext = '', conversationHistory = []) => {
     try {
-        const model = genAI.getGenerativeModel({ 
-            model: models.tutor 
-        });
-
         // Build conversation history
         let historyContext = '';
         if (conversationHistory.length > 0) {
@@ -99,9 +88,12 @@ const chatWithTutor = async (question, courseContext = '', conversationHistory =
         - Break down complex topics into simple terms
         - Suggest further reading or practice if relevant`;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        
+        return response.text;
     } catch (error) {
         console.error('AI Tutor Error:', error);
         throw new Error('Failed to get AI response: ' + error.message);
@@ -111,10 +103,6 @@ const chatWithTutor = async (question, courseContext = '', conversationHistory =
 // Generate Quiz from course content
 const generateQuiz = async (courseContent, numQuestions = 5, difficulty = 'medium') => {
     try {
-        const model = genAI.getGenerativeModel({ 
-            model: models.quizGenerator 
-        });
-
         const prompt = `Based on the following course content, generate ${numQuestions} multiple-choice questions.
         
         Course content:
@@ -137,10 +125,12 @@ const generateQuiz = async (courseContent, numQuestions = 5, difficulty = 'mediu
         Make questions varied and test understanding, not just memorization.
         Include a mix of easy, medium, and hard questions.`;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
         
+        const text = response.text;
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
             throw new Error('Invalid response format from AI');
@@ -156,19 +146,18 @@ const generateQuiz = async (courseContent, numQuestions = 5, difficulty = 'mediu
 // Summarize content
 const summarizeContent = async (content, maxLength = 200) => {
     try {
-        const model = genAI.getGenerativeModel({ 
-            model: models.summarizer 
-        });
-
         const prompt = `Summarize the following content in ${maxLength} words or less.
         Make it clear, concise, and capture the key points.
         
         Content to summarize:
         ${content.substring(0, 5000)}`;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        
+        return response.text;
     } catch (error) {
         console.error('AI Summarization Error:', error);
         throw new Error('Failed to summarize content: ' + error.message);
@@ -178,10 +167,6 @@ const summarizeContent = async (content, maxLength = 200) => {
 // Explain concept simply
 const explainConcept = async (concept, level = 'beginner') => {
     try {
-        const model = genAI.getGenerativeModel({ 
-            model: models.tutor 
-        });
-
         const prompt = `Explain the concept of "${concept}" in simple terms for a ${level} level learner.
         
         Include:
@@ -193,9 +178,12 @@ const explainConcept = async (concept, level = 'beginner') => {
         
         Keep the explanation clear, engaging, and easy to understand.`;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        
+        return response.text;
     } catch (error) {
         console.error('AI Explain Concept Error:', error);
         throw new Error('Failed to explain concept: ' + error.message);
