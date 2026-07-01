@@ -1,6 +1,5 @@
-console.log('🔍 Loading aiService.js with @google/genai');
 const { GoogleGenAI } = require('@google/genai');
-console.log('✅ GoogleGenAI loaded successfully');
+
 // Initialize Gemini with your API key
 const ai = new GoogleGenAI({ 
     apiKey: process.env.GEMINI_API_KEY 
@@ -31,20 +30,20 @@ const chatWithTutor = async (question, courseContext = '', conversationHistory =
         - Break down complex topics into simple terms
         - Suggest further reading or practice if relevant`;
 
-        console.log('📤 Sending prompt to Gemini:', prompt.substring(0, 100) + '...');
+        console.log('📤 Sending to Gemini, prompt length:', prompt.length);
 
-        // Correct syntax for @google/genai v1.0.0
+        // Use the SAME syntax as your working test-gemini.js
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt,
         });
 
-        console.log('📥 Received response from Gemini');
+        console.log('📥 Gemini response received');
 
-        // v1.0.0 uses response.text directly
+        // v1.0.0 uses response.text directly (like in test-gemini.js)
         return response.text;
     } catch (error) {
-        console.error('❌ AI Tutor Error:', error);
+        console.error('❌ AI Tutor Error:', error.message);
         throw new Error('Failed to get AI response: ' + error.message);
     }
 };
@@ -58,7 +57,7 @@ const generateCourseOutline = async (topic, level = 'beginner') => {
         {
             "title": "Course title",
             "subtitle": "Brief subtitle",
-            "description": "Detailed course description",
+            "description": "Detailed course description (100-150 words)",
             "level": "${level}",
             "learningObjectives": ["Objective 1", "Objective 2", "Objective 3"],
             "requirements": ["Requirement 1", "Requirement 2"],
