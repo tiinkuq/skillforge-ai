@@ -22,33 +22,25 @@ const CourseDetail = () => {
     const [activeModule, setActiveModule] = useState(-1);
     const [activeLesson, setActiveLesson] = useState(0);
 
-    // Check if current user is the instructor
     const isInstructor = isAuthenticated && user && course && course.instructor && 
         (user.id === course.instructor._id || 
          user._id === course.instructor._id || 
          user.email === course.instructor.email);
 
     useEffect(() => {
-        console.log('🔍 CourseDetail mounted with ID:', id);
-        console.log('🔍 Current URL:', window.location.href);
         if (id) {
             fetchCourse();
         } else {
             console.error('❌ No course ID provided');
-            showToast.error('Invalid course ID');
             navigate('/courses');
         }
     }, [id]);
 
-    // Force check enrollment status when user or course changes
     useEffect(() => {
         if (user && course) {
-            // Check if user is enrolled in this course
             const isUserEnrolled = user.enrolledCourses?.some(
                 e => e.course === course._id || e.course?._id === course._id
             );
-            
-            // Also check in course's enrolledStudents
             const isInCourseStudents = course.enrolledStudents?.some(
                 student => student._id === user.id || student._id === user._id
             );
@@ -78,10 +70,8 @@ const CourseDetail = () => {
             
             setCourse(response.course);
             
-            // Check enrollment from multiple sources
             let enrolled = response.isEnrolled || false;
             
-            // Also check if user is in the enrolledStudents array
             if (isAuthenticated && user && response.course?.enrolledStudents) {
                 const userIsEnrolled = response.course.enrolledStudents.some(
                     student => student._id === user.id || student._id === user._id
@@ -92,7 +82,6 @@ const CourseDetail = () => {
                 }
             }
             
-            // Also check in user's enrolledCourses
             if (isAuthenticated && user?.enrolledCourses) {
                 const userHasEnrolled = user.enrolledCourses.some(
                     e => e.course === response.course._id || e.course?._id === response.course._id
@@ -116,15 +105,12 @@ const CourseDetail = () => {
     };
 
     const handleEnroll = async () => {
-        console.log('🎯 Enroll clicked - Current state:', { isEnrolled, isAuthenticated });
-
         if (!isAuthenticated) {
             showToast.error('Please login to enroll');
             navigate('/login');
             return;
         }
 
-        // If already enrolled, redirect to learning page
         if (isEnrolled) {
             console.log('✅ Already enrolled, redirecting to learn page');
             navigate(`/learn/${course._id}`);
@@ -138,22 +124,16 @@ const CourseDetail = () => {
             console.log('📥 Enroll Response:', response);
             
             if (response.success) {
-                // Force update states immediately
                 setIsEnrolled(true);
                 setProgress(0);
-                
-                // Show success message
                 showToast.success('🎉 Successfully enrolled in course!');
                 
-                // Refresh user data to update enrolledCourses
                 console.log('🔄 Refreshing user data...');
                 const updatedUser = await refreshUser();
                 console.log('✅ User refreshed:', updatedUser);
                 
-                // Force fetch course data again
                 await fetchCourse();
                 
-                // Navigate to the course page after successful enrollment
                 setTimeout(() => {
                     window.location.href = `/courses/${id}`;
                 }, 1000);
@@ -161,13 +141,10 @@ const CourseDetail = () => {
         } catch (error) {
             console.error('❌ Enrollment error:', error);
             
-            // Check if already enrolled
             if (error.response?.data?.message?.includes('already enrolled')) {
                 console.log('ℹ️ User is already enrolled - updating state');
                 setIsEnrolled(true);
                 showToast.info('You are already enrolled in this course');
-                
-                // Refresh user data and course data
                 await refreshUser();
                 await fetchCourse();
             } else {
@@ -175,11 +152,9 @@ const CourseDetail = () => {
             }
         } finally {
             setEnrolling(false);
-            console.log('🏁 Enrollment process complete, isEnrolled:', isEnrolled);
         }
     };
 
-    // Start chat with instructor
     const handleStartChat = async () => {
         try {
             if (!isAuthenticated) {
@@ -255,11 +230,7 @@ const CourseDetail = () => {
     };
 
     if (loading) {
-        return (
-            <div className="loading-container">
-                <div className="loader">Loading course...</div>
-            </div>
-        );
+        return <div className="loading-container"><div className="loader">Loading course...</div></div>;
     }
 
     if (!course) {
@@ -274,18 +245,18 @@ const CourseDetail = () => {
     }
 
     return (
-        <div className="course-detail-page">
-            <div className="course-hero">
-                <div className="course-hero-content">
-                    <div className="course-hero-left">
-                        <div className="course-breadcrumb">
+        <div className="course-detail-page" suppressHydrationWarning>
+            <div className="course-hero" suppressHydrationWarning>
+                <div className="course-hero-content" suppressHydrationWarning>
+                    <div className="course-hero-left" suppressHydrationWarning>
+                        <div className="course-breadcrumb" suppressHydrationWarning>
                             <Link to="/courses">Courses</Link>
                             <span> / </span>
                             <span>{course.category}</span>
                         </div>
-                        <h1>{course.title}</h1>
-                        {course.subtitle && <p className="course-subtitle">{course.subtitle}</p>}
-                        <div className="course-meta-details">
+                        <h1 suppressHydrationWarning>{course.title}</h1>
+                        {course.subtitle && <p className="course-subtitle" suppressHydrationWarning>{course.subtitle}</p>}
+                        <div className="course-meta-details" suppressHydrationWarning>
                             <span className="course-level">{course.level}</span>
                             <span className="course-duration">
                                 ⏱️ {course.totalDuration || 0} min
@@ -299,7 +270,7 @@ const CourseDetail = () => {
                                 <span className="badge-draft">📝 Draft</span>
                             )}
                         </div>
-                        <div className="course-instructor">
+                        <div className="course-instructor" suppressHydrationWarning>
                             <span>👨‍🏫 Instructor: </span>
                             <Link to={`/instructor/${course.instructor?._id}`}>
                                 {course.instructor?.name || 'Unknown'}
@@ -334,7 +305,7 @@ const CourseDetail = () => {
                                 </button>
                             )}
                         </div>
-                        <div className="course-rating">
+                        <div className="course-rating" suppressHydrationWarning>
                             <span>⭐ {course.rating?.toFixed(1) || '0.0'}</span>
                             <span>({course.numberOfReviews || 0} reviews)</span>
                             <span className="students-count">
@@ -342,325 +313,8 @@ const CourseDetail = () => {
                             </span>
                         </div>
                     </div>
-
-                    <div className="course-hero-right">
-                        <div className="course-price-card">
-                            {isInstructor ? (
-                                <div className="instructor-view">
-                                    <div className="instructor-badge">👨‍🏫 You are the instructor</div>
-                                    <p style={{ color: '#4a5568', marginTop: '0.5rem' }}>
-                                        You created this course. Students will see the price and enroll options.
-                                    </p>
-                                    <div className="course-stats-instructor">
-                                        <div className="stat-item">
-                                            <span className="stat-value">{course.numberOfEnrollments || 0}</span>
-                                            <span className="stat-label">Students</span>
-                                        </div>
-                                        <div className="stat-item">
-                                            <span className="stat-value">{course.rating?.toFixed(1) || '0.0'}⭐</span>
-                                            <span className="stat-label">Rating</span>
-                                        </div>
-                                        <div className="stat-item">
-                                            <span className="stat-value">{course.isPublished ? '✅' : '📝'}</span>
-                                            <span className="stat-label">Status</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="price">
-                                        {course.price === 0 ? (
-                                            <span className="free">Free</span>
-                                        ) : (
-                                            <span>${course.price}</span>
-                                        )}
-                                    </div>
-                                    
-                                    {isEnrolled ? (
-                                        <div className="enrolled-status">
-                                            <div className="progress-section">
-                                                <p>Your Progress</p>
-                                                <div className="progress-bar">
-                                                    <div 
-                                                        className="progress-fill"
-                                                        style={{ width: `${progress}%` }}
-                                                    />
-                                                </div>
-                                                <span className="progress-text">{progress}%</span>
-                                            </div>
-                                            <Link to={`/learn/${course._id}`} className="btn-primary btn-full">
-                                                📖 Continue Learning
-                                            </Link>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <button 
-                                                className="btn-primary btn-full"
-                                                onClick={handleEnroll}
-                                                disabled={enrolling || !course.isPublished}
-                                            >
-                                                {enrolling ? '⏳ Enrolling...' : '🎯 Enroll Now'}
-                                            </button>
-                                            {!course.isPublished && (
-                                                <p style={{ 
-                                                    color: '#e53e3e', 
-                                                    fontSize: '0.9rem', 
-                                                    marginTop: '0.5rem',
-                                                    textAlign: 'center'
-                                                }}>
-                                                    ⚠️ This course is not published yet
-                                                </p>
-                                            )}
-                                        </>
-                                    )}
-                                    
-                                    <div className="course-features">
-                                        <div className="feature">
-                                            <span>✅</span>
-                                            <span>Lifetime access</span>
-                                        </div>
-                                        <div className="feature">
-                                            <span>📱</span>
-                                            <span>Mobile friendly</span>
-                                        </div>
-                                        <div className="feature">
-                                            <span>🎓</span>
-                                            <span>Certificate of completion</span>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-
-                            {isAuthenticated && !isInstructor && course.instructor?._id && (
-                                <button 
-                                    onClick={handleStartChat}
-                                    className="btn-chat-primary"
-                                    style={{
-                                        width: '100%',
-                                        marginTop: '1rem',
-                                        padding: '0.75rem',
-                                        background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        fontSize: '1rem',
-                                        fontWeight: '600',
-                                        transition: 'all 0.3s',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '0.5rem',
-                                        boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.target.style.transform = 'translateY(-2px)';
-                                        e.target.style.boxShadow = '0 6px 20px rgba(79, 70, 229, 0.4)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.target.style.transform = 'translateY(0)';
-                                        e.target.style.boxShadow = '0 4px 12px rgba(79, 70, 229, 0.3)';
-                                    }}
-                                >
-                                    💬 Message Instructor
-                                </button>
-                            )}
-
-                            {isInstructor && (
-                                <div className="instructor-controls" style={{ marginTop: '1rem' }}>
-                                    <button 
-                                        className={`btn-${course.isPublished ? 'secondary' : 'primary'}`}
-                                        onClick={handleTogglePublish}
-                                        style={{ width: '100%' }}
-                                    >
-                                        {course.isPublished ? '📌 Unpublish Course' : '🚀 Publish Course'}
-                                    </button>
-                                    <button 
-                                        className="btn-secondary"
-                                        onClick={() => navigate(`/edit-course/${course._id}`)}
-                                        style={{ width: '100%', marginTop: '0.5rem' }}
-                                    >
-                                        ✏️ Edit Course
-                                    </button>
-                                    <button 
-                                        className="btn-danger"
-                                        onClick={handleDeleteCourse}
-                                        style={{ width: '100%', marginTop: '0.5rem' }}
-                                    >
-                                        🗑️ Delete Course
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
                 </div>
             </div>
-
-            {/* Course Content */}
-            <div className="course-content">
-                <div className="course-content-grid">
-                    <div className="course-main">
-                        <section className="course-section">
-                            <h2>Description</h2>
-                            <p className="course-description-full">{course.description}</p>
-                        </section>
-
-                        {course.learningObjectives?.length > 0 && (
-                            <section className="course-section">
-                                <h2>What You'll Learn</h2>
-                                <ul className="objectives-list">
-                                    {course.learningObjectives.map((obj, index) => (
-                                        <li key={index}>✅ {obj}</li>
-                                    ))}
-                                </ul>
-                            </section>
-                        )}
-
-                        {course.requirements?.length > 0 && (
-                            <section className="course-section">
-                                <h2>Requirements</h2>
-                                <ul className="requirements-list">
-                                    {course.requirements.map((req, index) => (
-                                        <li key={index}>📌 {req}</li>
-                                    ))}
-                                </ul>
-                            </section>
-                        )}
-
-                        <section className="course-section">
-                            <h2>Course Content</h2>
-                            <div className="modules-list">
-                                {course.modules?.length > 0 ? (
-                                    course.modules.map((module, moduleIndex) => (
-                                        <motion.div 
-                                            key={moduleIndex}
-                                            className="module-item"
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: moduleIndex * 0.1 }}
-                                        >
-                                            <div 
-                                                className="module-header"
-                                                onClick={() => setActiveModule(activeModule === moduleIndex ? -1 : moduleIndex)}
-                                            >
-                                                <div className="module-title">
-                                                    <span className="module-number">Module {moduleIndex + 1}</span>
-                                                    <h3>{module.title}</h3>
-                                                </div>
-                                                <span className="module-toggle">
-                                                    {activeModule === moduleIndex ? '−' : '+'}
-                                                </span>
-                                            </div>
-                                            {activeModule === moduleIndex && (
-                                                <div className="lessons-list">
-                                                    {module.lessons?.map((lesson, lessonIndex) => (
-                                                        <div 
-                                                            key={lessonIndex}
-                                                            className={`lesson-item ${lesson.isFree || isEnrolled ? '' : 'locked'}`}
-                                                            onClick={() => {
-                                                                if (lesson.isFree || isEnrolled) {
-                                                                    setActiveLesson(lessonIndex);
-                                                                    showToast.info(`Opening lesson: ${lesson.title}`);
-                                                                } else {
-                                                                    showToast.info('Enroll to access this lesson');
-                                                                }
-                                                            }}
-                                                        >
-                                                            <span className="lesson-icon">
-                                                                {lesson.isFree ? '🔓' : isEnrolled ? '▶️' : '🔒'}
-                                                            </span>
-                                                            <span className="lesson-title">{lesson.title}</span>
-                                                            <span className="lesson-duration">
-                                                                {lesson.duration || 0} min
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </motion.div>
-                                    ))
-                                ) : (
-                                    <p className="no-content">No modules yet. Check back later!</p>
-                                )}
-                            </div>
-                        </section>
-                    </div>
-
-                    <div className="course-sidebar">
-                        <div className="sidebar-card">
-                            <h4>About the Instructor</h4>
-                            <div className="instructor-profile">
-                                {course.instructor?.avatar?.url ? (
-                                    <img 
-                                        src={course.instructor.avatar.url} 
-                                        alt={course.instructor.name}
-                                        className="instructor-avatar"
-                                    />
-                                ) : (
-                                    <div className="instructor-avatar-placeholder">
-                                        {course.instructor?.name?.charAt(0) || 'I'}
-                                    </div>
-                                )}
-                                <div className="instructor-info">
-                                    <h5>{course.instructor?.name || 'Unknown'}</h5>
-                                    <p className="instructor-role">Instructor</p>
-                                </div>
-                            </div>
-                            {course.instructor?.bio && (
-                                <p className="instructor-bio">{course.instructor.bio}</p>
-                            )}
-                        </div>
-
-                        <div className="sidebar-card">
-                            <h4>Course Details</h4>
-                            <ul className="course-details-list">
-                                <li>
-                                    <span>Category:</span>
-                                    <span>{course.category}</span>
-                                </li>
-                                <li>
-                                    <span>Level:</span>
-                                    <span>{course.level}</span>
-                                </li>
-                                <li>
-                                    <span>Language:</span>
-                                    <span>{course.language}</span>
-                                </li>
-                                <li>
-                                    <span>Status:</span>
-                                    <span>{course.isPublished ? '✅ Published' : '📝 Draft'}</span>
-                                </li>
-                                <li>
-                                    <span>Last Updated:</span>
-                                    <span>{new Date(course.updatedAt).toLocaleDateString()}</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        {course.tags?.length > 0 && (
-                            <div className="sidebar-card">
-                                <h4>Tags</h4>
-                                <div className="tags-container">
-                                    {course.tags.map((tag, index) => (
-                                        <span key={index} className="tag">
-                                            #{tag}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            <div className="reviews-section-container">
-                <div className="reviews-header">
-                    <h2>Student Reviews</h2>
-                </div>
-                <Reviews courseId={course._id} courseInstructorId={course.instructor?._id} />
-            </div>
-
-            <AITutor courseId={course._id} courseTitle={course.title} />
         </div>
     );
 };
