@@ -31,7 +31,13 @@ const CourseDetail = () => {
     useEffect(() => {
         console.log('🔍 CourseDetail mounted with ID:', id);
         console.log('🔍 Current URL:', window.location.href);
-        fetchCourse();
+        if (id) {
+            fetchCourse();
+        } else {
+            console.error('❌ No course ID provided');
+            showToast.error('Invalid course ID');
+            navigate('/courses');
+        }
     }, [id]);
 
     // Force check enrollment status when user or course changes
@@ -59,8 +65,16 @@ const CourseDetail = () => {
     const fetchCourse = async () => {
         try {
             setLoading(true);
+            console.log('📤 Fetching course with ID:', id);
             const response = await courseService.getCourse(id);
             console.log('📚 Course Data:', response);
+            
+            if (!response.success || !response.course) {
+                console.error('❌ Course not found');
+                showToast.error('Course not found');
+                navigate('/courses');
+                return;
+            }
             
             setCourse(response.course);
             
@@ -93,7 +107,7 @@ const CourseDetail = () => {
             setIsEnrolled(enrolled);
             setProgress(response.progress || 0);
         } catch (error) {
-            console.error('Error fetching course:', error);
+            console.error('❌ Error fetching course:', error);
             showToast.error('Failed to load course');
             navigate('/courses');
         } finally {
@@ -119,7 +133,7 @@ const CourseDetail = () => {
 
         setEnrolling(true);
         try {
-            console.log('📤 Sending enroll request...');
+            console.log('📤 Sending enroll request for course:', id);
             const response = await courseService.enrollCourse(id);
             console.log('📥 Enroll Response:', response);
             
@@ -139,21 +153,10 @@ const CourseDetail = () => {
                 // Force fetch course data again
                 await fetchCourse();
                 
-                // Double-check and force state update
-                if (updatedUser?.enrolledCourses) {
-                    const isNowEnrolled = updatedUser.enrolledCourses.some(
-                        e => e.course === course._id || e.course?._id === course._id
-                    );
-                    if (isNowEnrolled) {
-                        console.log('✅ Enrollment confirmed in refreshed user data');
-                        setIsEnrolled(true);
-                    }
-                }
-                
-                // Reload page after a moment to ensure all states are fresh
+                // Navigate to the course page after successful enrollment
                 setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
+                    window.location.href = `/courses/${id}`;
+                }, 1000);
             }
         } catch (error) {
             console.error('❌ Enrollment error:', error);
@@ -167,11 +170,6 @@ const CourseDetail = () => {
                 // Refresh user data and course data
                 await refreshUser();
                 await fetchCourse();
-                
-                // Reload page to show updated state
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
             } else {
                 showToast.error(error.response?.data?.message || 'Failed to enroll');
             }
@@ -276,7 +274,7 @@ const CourseDetail = () => {
     }
 
     return (
-        <div className="course-detail-page" suppressHydrationWarning>
+        <div className="course-detail-page">
             <div className="course-hero">
                 <div className="course-hero-content">
                     <div className="course-hero-left">
