@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { courseService } from '../services/courseService';
@@ -11,7 +10,6 @@ import Reviews from '../components/reviews/Reviews';
 
 const CourseDetail = () => {
     const { id } = useParams();
-    const location = useLocation();
     console.log('🆔 Course ID from URL:', id);
     const navigate = useNavigate();
     const { user, isAuthenticated, refreshUser } = useAuth();
@@ -33,9 +31,6 @@ const CourseDetail = () => {
     useEffect(() => {
         console.log('🔍 CourseDetail mounted with ID:', id);
         console.log('🔍 Current URL:', window.location.href);
-        console.log('🔍 useParams:', params);
-        console.log('🔍 location:', location.pathname);
-        console.log('🔍 id from params:', params.id);
         fetchCourse();
     }, [id]);
 
@@ -69,7 +64,7 @@ const CourseDetail = () => {
             
             setCourse(response.course);
             
-            // CRITICAL FIX: Check enrollment from multiple sources
+            // Check enrollment from multiple sources
             let enrolled = response.isEnrolled || false;
             
             // Also check if user is in the enrolledStudents array
@@ -129,7 +124,7 @@ const CourseDetail = () => {
             console.log('📥 Enroll Response:', response);
             
             if (response.success) {
-                // CRITICAL FIX: Force update states immediately
+                // Force update states immediately
                 setIsEnrolled(true);
                 setProgress(0);
                 
