@@ -276,7 +276,7 @@ const CourseDetail = () => {
     }
 
     return (
-        <div className="course-detail-page">
+        <div className="course-detail-page" suppressHydrationWarning>
             <div className="course-hero">
                 <div className="course-hero-content">
                     <div className="course-hero-left">
