@@ -1,7 +1,7 @@
 # SkillForge AI - AI-Powered Learning Platform
 
 ## 🌐 Live Demo
-- **Frontend:** https://skillforge-ai-platform-sigma.vercel.app
+- **Frontend:** https://skillforge-ai-platform-omega.vercel.app/
 - **Backend API:** https://skillforge-ai-backend-cji0.onrender.com/api
 - **Admin Login:** admin@skillforgeai.com / 123456
 
